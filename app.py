@@ -7,7 +7,7 @@ wav_audio_data = st_audiorec()
 if wav_audio_data is not None:
     st.audio(wav_audio_data, format='audio/wav')
 import streamlit as st
-import sounddevice as sd
+
 import numpy as np
 import librosa
 import soundfile as sf
