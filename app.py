@@ -1,30 +1,56 @@
 import streamlit as st
-import sounddevice as sd
-import numpy as np
 import librosa
+import numpy as np
 import soundfile as sf
 import io
-import pandas as pd
 import pickle
+import base64
+import pandas as pd
 
 # Load the trained model
 MODEL_PATH = "trained_model.pkl"
 with open(MODEL_PATH, "rb") as model_file:
     model = pickle.load(model_file)
 
-# Function to record audio
-def record_audio(duration=5, samplerate=22050):
-    st.write("Recording... Speak now!")
-    audio_data = sd.rec(int(duration * samplerate), samplerate=samplerate, channels=1, dtype=np.float32)
-    sd.wait()
-    st.write("Recording complete!")
-
-    buffer = io.BytesIO()
-    sf.write(buffer, audio_data, samplerate, format='WAV')
-    buffer.seek(0)
+# JavaScript-based audio recording function
+def audio_recorder():
+    """JavaScript-based audio recording using HTML5."""
+    st.write("Click the button below to record audio.")
+    js_code = """
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        function startRecording() {
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.start();
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+                mediaRecorder.onstop = () => {
+                    let audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    let reader = new FileReader();
+                    reader.readAsDataURL(audioBlob);
+                    reader.onloadend = () => {
+                        let base64Audio = reader.result.split(',')[1];
+                        let py_audio = document.getElementById("audio_data");
+                        py_audio.value = base64Audio;
+                        document.getElementById("submit_audio").click();
+                    };
+                };
+            });
+        }
+        function stopRecording() {
+            mediaRecorder.stop();
+        }
+    </script>
+    <button onclick="startRecording()">Start Recording</button>
+    <button onclick="stopRecording()">Stop Recording</button>
+    <input type="hidden" id="audio_data" name="audio_data">
+    <button id="submit_audio" style="display:none;" onclick="document.getElementById('audio_data').dispatchEvent(new Event('change'))">Submit</button>
+    """
+    st.components.v1.html(js_code, height=300)
     
-    return buffer
-
 # Function to extract 468-dimensional feature vector
 def extract_468_features(audio_file, sr=22050, n_mfcc=13):
     y, sr = librosa.load(audio_file, sr=sr)
@@ -61,22 +87,11 @@ def predict_dementia(features):
 st.title("🎤 Dementia Prediction Using Audio")
 st.write("Upload an audio file or record your voice to extract features and predict the probability of dementia.")
 
+# Audio recording
+audio_recorder()
+
+# File uploader
 uploaded_file = st.file_uploader("Upload an audio file (.wav)", type=["wav"])
-
-if st.button("🎙️ Record Audio"):
-    st.audio(recorded_audio, format="audio/wav")
-   
-    if recorded_audio is None:
-        st.error("No audio recorded. Please try again.")
-    else:   
-        st.audio(recorded_audio, format="audio/wav")
-        features_468 = extract_468_features(recorded_audio)
-
-        st.write("### Extracted 468-Dimensional Features:")
-        st.write(features_468)
-
-        dementia_prob = predict_dementia(features_468)
-        st.write(f"### Dementia Probability: {dementia_prob[1]*100:.2f}%")
 
 if uploaded_file is not None:
     st.audio(uploaded_file, format="audio/wav")
@@ -87,3 +102,18 @@ if uploaded_file is not None:
 
     dementia_prob = predict_dementia(features_468)
     st.write(f"### Dementia Probability: {dementia_prob[1]*100:.2f}%")
+
+# Handle recorded audio from JavaScript
+recorded_audio = st.text_input("", key="audio_data")
+if recorded_audio:
+    audio_bytes = base64.b64decode(recorded_audio)
+    audio_buffer = io.BytesIO(audio_bytes)
+    st.audio(audio_buffer, format="audio/wav")
+
+    features_468 = extract_468_features(audio_buffer)
+    st.write("### Extracted 468-Dimensional Features:")
+    st.write(features_468)
+
+    dementia_prob = predict_dementia(features_468)
+    st.write(f"### Dementia Probability: {dementia_prob[1]*100:.2f}%")
+
