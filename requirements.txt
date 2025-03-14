@@ -7,6 +7,6 @@ streamlit
 scipy
 
 
-base64
+
 io
 soundfile
