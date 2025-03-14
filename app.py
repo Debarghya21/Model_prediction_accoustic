@@ -1,7 +1,7 @@
 
 from st_audiorec import st_audiorec
 import streamlit as st
-st.write("If you want to record and download your audio file")
+st.title("If you want to record and download your audio file")
 wav_audio_data = st_audiorec()
 
 if wav_audio_data is not None:
@@ -21,17 +21,6 @@ with open(MODEL_PATH, "rb") as model_file:
     model = pickle.load(model_file)
 
 # Function to record audio
-'''def record_audio(duration=5, samplerate=22050):
-    st.write("Recording... Speak now!")
-    audio_data = sd.rec(int(duration * samplerate), samplerate=samplerate, channels=1, dtype=np.float32)
-    sd.wait()
-    st.write("Recording complete!")
-
-    buffer = io.BytesIO()
-    sf.write(buffer, audio_data, samplerate, format='WAV')
-    buffer.seek(0)
-    
-    return buffer'''
 
 # Function to extract 468-dimensional feature vector
 def extract_468_features(audio_file, sr=22050, n_mfcc=13):
@@ -71,19 +60,7 @@ st.write("Upload an audio file or record your voice to extract features and pred
 
 uploaded_file = st.file_uploader("Upload an audio file (.wav)", type=["wav"])
 
-'''if st.button("🎙️ Record Audio"):
-    recorded_audio = record_audio(duration=5)
-    if recorded_audio is None:
-        st.error("No audio recorded. Please try again.")
-    else:   
-        st.audio(recorded_audio, format="audio/wav")
-        features_468 = extract_468_features(recorded_audio)
 
-        st.write("### Extracted 468-Dimensional Features:")
-        st.write(features_468)
-
-        dementia_prob = predict_dementia(features_468)
-        st.write(f"### Dementia Probability: {dementia_prob[1]*100:.2f}%")'''
 
 if uploaded_file is not None:
     st.audio(uploaded_file, format="audio/wav")
