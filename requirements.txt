@@ -1,12 +1,6 @@
+streamlit
 librosa
 numpy
+soundfile
 pandas
-
-soundfile
-streamlit
 scipy
-
-
-
-io
-soundfile
