@@ -1,1 +1,5 @@
-portaudio
+
+ffmpeg
+libasound2
+libportaudio2
+libsndfile1
