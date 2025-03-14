@@ -64,7 +64,8 @@ st.write("Upload an audio file or record your voice to extract features and pred
 uploaded_file = st.file_uploader("Upload an audio file (.wav)", type=["wav"])
 
 if st.button("🎙️ Record Audio"):
-    recorded_audio = record_audio(duration=5)
+    st.audio(recorded_audio, format="audio/wav")
+   
     if recorded_audio is None:
         st.error("No audio recorded. Please try again.")
     else:   
