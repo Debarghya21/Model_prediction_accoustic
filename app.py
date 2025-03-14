@@ -102,19 +102,18 @@ if uploaded_file is not None:
     '''
 import streamlit as st
 import base64
-import json
 
 # Streamlit UI
 st.title("🎤 Record and Download Audio")
 st.write("Click the buttons below to record audio and download it as a .wav file.")
 
-# JavaScript for audio recording
+# JavaScript for audio recording and downloading
 st.markdown(
     """
     <script>
     let mediaRecorder;
     let audioChunks = [];
-
+    
     function startRecording() {
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(stream => {
@@ -132,9 +131,8 @@ st.markdown(
                     let a = document.createElement('a');
                     a.href = url;
                     a.download = 'recorded_audio.wav';
+                    a.textContent = 'Download Recorded Audio';
                     document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
                 };
             });
     }
@@ -147,6 +145,7 @@ st.markdown(
     </script>
     <button onclick="startRecording()">🎙️ Start Recording</button>
     <button onclick="stopRecording()">⏹️ Stop Recording</button>
+    <div id="download_link"></div>
     """,
     unsafe_allow_html=True
 )
