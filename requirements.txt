@@ -4,3 +4,7 @@ numpy
 soundfile
 pandas
 scipy
+streamlit
+streamlit-audiorec
+numpy
+pydub
