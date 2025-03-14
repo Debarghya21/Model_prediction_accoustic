@@ -5,7 +5,7 @@ import soundfile as sf
 import io
 import pickle
 import base64
-import pandas as pd
+import time
 
 # Load the trained model
 MODEL_PATH = "trained_model.pkl"
@@ -14,8 +14,8 @@ with open(MODEL_PATH, "rb") as model_file:
 
 # JavaScript-based audio recording function
 def audio_recorder():
-    """JavaScript-based audio recording using HTML5."""
-    st.write("Click the button below to record audio.")
+    """JavaScript-based audio recording for 5 seconds using HTML5."""
+    st.write("Click the button below to record audio for 5 seconds.")
     js_code = """
     <script>
         let mediaRecorder;
@@ -27,6 +27,9 @@ def audio_recorder():
                 mediaRecorder.ondataavailable = event => {
                     audioChunks.push(event.data);
                 };
+                setTimeout(() => {
+                    mediaRecorder.stop();
+                }, 5000);
                 mediaRecorder.onstop = () => {
                     let audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
                     let reader = new FileReader();
@@ -40,12 +43,8 @@ def audio_recorder():
                 };
             });
         }
-        function stopRecording() {
-            mediaRecorder.stop();
-        }
     </script>
-    <button onclick="startRecording()">Start Recording</button>
-    <button onclick="stopRecording()">Stop Recording</button>
+    <button onclick="startRecording()">Record Audio (5 sec)</button>
     <input type="hidden" id="audio_data" name="audio_data">
     <button id="submit_audio" style="display:none;" onclick="document.getElementById('audio_data').dispatchEvent(new Event('change'))">Submit</button>
     """
@@ -85,23 +84,9 @@ def predict_dementia(features):
 
 # Streamlit App UI
 st.title("🎤 Dementia Prediction Using Audio")
-st.write("Upload an audio file or record your voice to extract features and predict the probability of dementia.")
 
 # Audio recording
 audio_recorder()
-
-# File uploader
-uploaded_file = st.file_uploader("Upload an audio file (.wav)", type=["wav"])
-
-if uploaded_file is not None:
-    st.audio(uploaded_file, format="audio/wav")
-    features_468 = extract_468_features(uploaded_file)
-
-    st.write("### Extracted 468-Dimensional Features:")
-    st.write(features_468)
-
-    dementia_prob = predict_dementia(features_468)
-    st.write(f"### Dementia Probability: {dementia_prob[1]*100:.2f}%")
 
 # Handle recorded audio from JavaScript
 recorded_audio = st.text_input("", key="audio_data")
@@ -111,9 +96,6 @@ if recorded_audio:
     st.audio(audio_buffer, format="audio/wav")
 
     features_468 = extract_468_features(audio_buffer)
-    st.write("### Extracted 468-Dimensional Features:")
-    st.write(features_468)
-
     dementia_prob = predict_dementia(features_468)
     st.write(f"### Dementia Probability: {dementia_prob[1]*100:.2f}%")
 
