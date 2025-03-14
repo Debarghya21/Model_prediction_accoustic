@@ -5,3 +5,5 @@ sounddevice
 soundfile
 streamlit
 scipy
+sounddevice
+pyaudio
