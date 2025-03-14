@@ -1,3 +1,4 @@
+'''
 import streamlit as st
 import librosa
 import soundfile as sf
@@ -98,4 +99,56 @@ if uploaded_file is not None:
     st.write(features_468)
     dementia_prob = predict_dementia(features_468)
     st.write(f"### Dementia Probability: {dementia_prob[1] * 100:.2f}%")
+    '''
+import streamlit as st
+import base64
+import json
+
+# Streamlit UI
+st.title("🎤 Record and Download Audio")
+st.write("Click the buttons below to record audio and download it as a .wav file.")
+
+# JavaScript for audio recording
+st.markdown(
+    """
+    <script>
+    let mediaRecorder;
+    let audioChunks = [];
+
+    function startRecording() {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.start();
+                audioChunks = [];
+                
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+                
+                mediaRecorder.onstop = () => {
+                    let blob = new Blob(audioChunks, { type: 'audio/wav' });
+                    let url = URL.createObjectURL(blob);
+                    let a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'recorded_audio.wav';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                };
+            });
+    }
+
+    function stopRecording() {
+        if (mediaRecorder) {
+            mediaRecorder.stop();
+        }
+    }
+    </script>
+    <button onclick="startRecording()">🎙️ Start Recording</button>
+    <button onclick="stopRecording()">⏹️ Stop Recording</button>
+    """,
+    unsafe_allow_html=True
+)
+
 
