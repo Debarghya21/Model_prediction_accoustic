@@ -56,7 +56,7 @@ def predict_dementia(features):
 
 # Streamlit App UI
 st.title("🎤 Dementia Prediction Using Audio")
-st.write("Upload an audio file or record your voice to extract features and predict the probability of dementia.")
+st.write("Upload an audio file and predict the probability of dementia.")
 
 uploaded_file = st.file_uploader("Upload an audio file (.wav)", type=["wav"])
 
