@@ -1,18 +1,37 @@
 
+from st_audiorec import st_audiorec
 import streamlit as st
+st.write("If you want to record and download your audio file")
+wav_audio_data = st_audiorec()
+
+if wav_audio_data is not None:
+    st.audio(wav_audio_data, format='audio/wav')
+import streamlit as st
+import sounddevice as sd
+import numpy as np
 import librosa
 import soundfile as sf
-import numpy as np
+import io
 import pandas as pd
 import pickle
-import io
-from io import BytesIO
-import base64
 
 # Load the trained model
 MODEL_PATH = "trained_model.pkl"
 with open(MODEL_PATH, "rb") as model_file:
     model = pickle.load(model_file)
+
+# Function to record audio
+'''def record_audio(duration=5, samplerate=22050):
+    st.write("Recording... Speak now!")
+    audio_data = sd.rec(int(duration * samplerate), samplerate=samplerate, channels=1, dtype=np.float32)
+    sd.wait()
+    st.write("Recording complete!")
+
+    buffer = io.BytesIO()
+    sf.write(buffer, audio_data, samplerate, format='WAV')
+    buffer.seek(0)
+    
+    return buffer'''
 
 # Function to extract 468-dimensional feature vector
 def extract_468_features(audio_file, sr=22050, n_mfcc=13):
@@ -32,72 +51,48 @@ def extract_468_features(audio_file, sr=22050, n_mfcc=13):
     std_features = np.std(features_per_frame, axis=1)
 
     summary_features_per_turn = np.hstack([min_features, max_features, mean_features, std_features])
-    summary_features_per_turn = summary_features_per_turn.reshape(1, -1)
+    summary_features_per_turn = summary_features_per_turn.reshape(1, -1)  # Shape (1, 156)
 
     max_across_turns = np.max(summary_features_per_turn, axis=0)
     mean_across_turns = np.mean(summary_features_per_turn, axis=0)
     std_across_turns = np.std(summary_features_per_turn, axis=0)
 
-    final_468_features = np.concatenate([max_across_turns, mean_across_turns, std_across_turns])
-    return final_468_features.reshape(1, -1)
+    final_468_features = np.concatenate([max_across_turns, mean_across_turns, std_across_turns])  # Shape (468,)
+    return final_468_features.reshape(1, -1)  # Reshape for model input
 
 # Function to predict dementia probability
 def predict_dementia(features):
-    probabilities = model.predict_proba(features)[0]
+    probabilities = model.predict_proba(features)[0]  # Get probabilities
     return probabilities
 
-# Streamlit UI
+# Streamlit App UI
 st.title("🎤 Dementia Prediction Using Audio")
 st.write("Upload an audio file or record your voice to extract features and predict the probability of dementia.")
 
 uploaded_file = st.file_uploader("Upload an audio file (.wav)", type=["wav"])
 
-# JavaScript to record audio
-st.write("Or record your voice below:")
-record_button = st.button("🎙️ Start Recording")
+'''if st.button("🎙️ Record Audio"):
+    recorded_audio = record_audio(duration=5)
+    if recorded_audio is None:
+        st.error("No audio recorded. Please try again.")
+    else:   
+        st.audio(recorded_audio, format="audio/wav")
+        features_468 = extract_468_features(recorded_audio)
 
-record_script = """
-<script>
-let mediaRecorder;
-let audioChunks = [];
+        st.write("### Extracted 468-Dimensional Features:")
+        st.write(features_468)
 
-function startRecording() {
-    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-        mediaRecorder = new MediaRecorder(stream);
-        mediaRecorder.start();
+        dementia_prob = predict_dementia(features_468)
+        st.write(f"### Dementia Probability: {dementia_prob[1]*100:.2f}%")'''
 
-        mediaRecorder.ondataavailable = event => {
-            audioChunks.push(event.data);
-        };
-
-        mediaRecorder.onstop = async () => {
-            let blob = new Blob(audioChunks, { type: 'audio/wav' });
-            let reader = new FileReader();
-            reader.readAsDataURL(blob);
-            reader.onloadend = () => {
-                let base64data = reader.result.split(',')[1];
-                fetch('/send_audio', {
-                    method: 'POST',
-                    body: JSON.stringify({ audio: base64data }),
-                    headers: { 'Content-Type': 'application/json' }
-                });
-            };
-        };
-    });
-}
-
-document.querySelector("button").addEventListener("click", startRecording);
-</script>
-"""
-st.markdown(record_script, unsafe_allow_html=True)
-
-# Process uploaded file
 if uploaded_file is not None:
     st.audio(uploaded_file, format="audio/wav")
     features_468 = extract_468_features(uploaded_file)
+
     st.write("### Extracted 468-Dimensional Features:")
     st.write(features_468)
+
     dementia_prob = predict_dementia(features_468)
-    st.write(f"### Dementia Probability: {dementia_prob[1] * 100:.2f}%")
+    st.write(f"### Dementia Probability: {dementia_prob[1]*100:.2f}%")
 
 
