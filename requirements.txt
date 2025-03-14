@@ -1,12 +1,12 @@
 librosa
 numpy
 pandas
-sounddevice
+
 soundfile
 streamlit
 scipy
-sounddevice
-pyaudio
+
+
 base64
 io
 soundfile
